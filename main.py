@@ -9,6 +9,23 @@ SEPARATOR = ">"
 COMMANDS = None
 CODE_SEPARATOR = "##"
 
+CURVED_ARROW = "⤷"
+SINGLE_SPACE = "  "
+
+class COLORS:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+    WHITE = '\033[37m'
+    GREY = '\033[90m'
+    ORANGE = '\033[33m'
+
 """
 COMMAND UTILITIES
 """
@@ -42,13 +59,28 @@ def get_folders():
 
 
 def choose_test_file(filename):
-    files = list(filter(lambda s: s.startswith(filename.split(".")[0] + "_test"), get_files()))
-    print("Choose a test file among the ones here:")
+    
+    files = list(filter(lambda s: ".txt" in s, get_files()))
+    print("\n{space}{white}[-]{grey} Choose a test file among the ones here:".format(space=SINGLE_SPACE, white=COLORS.WHITE, grey=COLORS.GREY))
+    
     for index, file in enumerate(files):
-        print("{0}: {1}".format(index + 1, file))
-    response = input("Choice: ")
+        print("{space}{space}{white}{arrow} {0}{grey}: {1}".format(index + 1, file, space=SINGLE_SPACE, arrow=CURVED_ARROW, white=COLORS.WHITE, grey=COLORS.GREY))
+    
+    response = input("{space}{white}[-] {grey}Choice: {white}".format(space=SINGLE_SPACE, white=COLORS.WHITE, grey=COLORS.GREY))
     print(end="\n")
+    
     return files[int(response) - 1]
+
+
+def run_file(file, language, to_input):
+
+    if language == "cpp":
+        result = subprocess.run(["./" + file], capture_output=True, input=(to_input + "\n").encode("UTF-8"))
+        value = str(result.stdout.decode("UTF-8"))[:-1]
+    
+    
+
+    return value
 
 
 """
@@ -62,7 +94,7 @@ def console_start():
 
 
 def req():
-    print("{0}{1} ".format(directory(), SEPARATOR), end="")
+    print("{col1}{bold}{0}{white}{1}{nobold} ".format(directory(), SEPARATOR, col1=COLORS.OKBLUE, bold=COLORS.BOLD, white=COLORS.WHITE, nobold=COLORS.ENDC), end="")
     return input()
 
 def process(req):
@@ -120,58 +152,81 @@ def cd(args):
 
 def test_cases(args):
 
+    # Basic checks
     if len(args) < 2:
         print("Not enough arguments")
         return
 
+    # Extract data
     language = args[0]
     file = args[1]
 
+    # Reformat
+    if "." + language not in file:
+        file += "." + language 
+
+    # For clarity
+    complete_path = CURRENT_DIRECTORY + "/" + file
+    
+    # Ask file, and get content
+    test_file = choose_test_file(file)
+
+    with open(CURRENT_DIRECTORY + "/" + test_file, "r") as f:
+        content = "".join(f.readlines())
+
+    content = list(filter(lambda x: x != "" and x != "\n", content.split(CODE_SEPARATOR)))
+    content = list(map(lambda x: x[:-1], content))
+
+    name = []
+    to_give = []
+    expected = []
+
+    for index, element in enumerate(content):
+        if index % 3 == 0:
+            name.append(element.replace("\n", ""))
+        elif index % 3 == 1:
+            to_give.append(element)
+        else:
+            expected.append(element.replace("\n", ""))
+
+    # Precompile programs if necessary
+    was_compiled = language in ["cpp"]
+
     if language == "cpp":
-
-        if ".cpp" not in file:
-            file += ".cpp"
+        res = subprocess.run(["g++", complete_path, "-o", file])
         
-        subprocess.run(["g++", file, "-o", "to_run"])
-        print("Compilation successful", end="\n\n")
+    print("{space}{white}[{green}+{white}] {grey}Compilation {green}successful{white}\n".format(space=SINGLE_SPACE, white=COLORS.WHITE, grey=COLORS.GREY, green=COLORS.OKGREEN))
+    
+    print("{space}{white}[+]{grey}Running {green}{0} {grey}tests".format(len(name), space=SINGLE_SPACE, white=COLORS.WHITE, grey=COLORS.GREY, green=COLORS.OKGREEN))
 
-        test_file = choose_test_file(file)
+    # Additional variables
+    test_cases_number = len(name)
+    success_cases = 0
 
-        with open(CURRENT_DIRECTORY + "/" + test_file, "r") as f:
-            content = "".join(f.readlines())
+    # Running each test case
+    for i in range(len(name)):
+        
+        print("{space}{space}{grey}{arrow} {white}#{0}{grey}: Provided value for test '{grey}{1}{grey}', testing...".format(i + 1, name[i], space=SINGLE_SPACE, arrow=CURVED_ARROW, white=COLORS.WHITE, grey=COLORS.GREY))
+        starting_time = time.time()
+        value = run_file(file, language, to_give[i])
+        
+        print("{space}{space}  ".format(space=SINGLE_SPACE), end="")
 
-        content = list(filter(lambda x: x != "" and x != "\n", content.split(CODE_SEPARATOR)))
-        content = list(map(lambda x: x[:-1], content))
-        #print(content)
+        if value == expected[i]:
+            print("{green}Test passed, {grey}obtained {green}{0}{grey}.".format(value, green=COLORS.OKGREEN, grey=COLORS.GREY), end="")
+            success_cases += 1
+        else:
+            print("{red}Test Failed, {grey}obtained {red}{0} {grey}≠ {green}{1}{grey}.".format(value, expected[i], red=COLORS.FAIL, grey=COLORS.GREY, green=COLORS.OKGREEN), end="")
 
-        name = []
-        to_give = []
-        expected = []
+        print(" [Runtime: {0}s]".format(round(time.time() - starting_time, 3)))
 
-        for index, element in enumerate(content):
-            if index % 3 == 0:
-                name.append(element.replace("\n", ""))
-            elif index % 3 == 1:
-                to_give.append(element)
-            else:
-                expected.append(element.replace("\n", ""))
+    output_color = COLORS.OKGREEN
+    if 2 * success_cases <= test_cases_number:
+        output_color = COLORS.FAIL
+    elif success_cases < test_cases_number:
+        output_color = COLORS.ORANGE
 
-        #print(name, to_give, expected)
-
-        print("Running {0} tests".format(len(name)))
-
-        for i in range(len(name)):
-            print("Test #{0} - '{1}': ".format(i + 1, name[i]), end="")
-            starting_time = time.time()
-            result = subprocess.run(["./to_run"], capture_output=True, input=(to_give[i] + "\n").encode("UTF-8"))
-            value = str(result.stdout.decode("UTF-8"))[:-1]
-            if value == expected[i]:
-                print("Succeeded", end="")
-            else:
-                print("Comme Mael, {0} != {1}".format(value, expected[i]), end="")
-            print(" [{0}s]".format(round(time.time() - starting_time, 6)))
-
-
+    print("\n{space}{white}[-]{grey} Ran {white}{0}{grey} tests, with {green}{1}{grey} tests passed. {white}({col}{2}%{white})".format(test_cases_number, success_cases, round(success_cases / test_cases_number * 100), space=SINGLE_SPACE, grey=COLORS.GREY, white=COLORS.WHITE, green=COLORS.OKGREEN, col=output_color))
 
 if __name__ == "__main__":
 
