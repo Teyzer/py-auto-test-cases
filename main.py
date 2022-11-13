@@ -75,9 +75,18 @@ def choose_test_file(filename):
 def run_file(file, language, to_input):
 
     if language == "cpp":
-        result = subprocess.run(["./" + file], capture_output=True, input=(to_input + "\n").encode("UTF-8"))
+        result = subprocess.run([CURRENT_DIRECTORY + "/" + ".".join(file.split(".")[:-1])], capture_output=True, input=(to_input + "\n").encode("UTF-8"))
         value = str(result.stdout.decode("UTF-8"))[:-1]
     
+    #print(file)
+
+    if language == "py":
+        #print(to_input.encode())
+        p = subprocess.Popen(["python3", CURRENT_DIRECTORY + "/" + file], stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
+        value = "\n".join(p.communicate(input=(to_input[1:] + "\n").encode("UTF-8"))[0].decode("UTF-8").split("\n")[:-1])
+        #print(stdout_data)
+        #result = subprocess.run(["python3", CURRENT_DIRECTORY + "/" + file], capture_output=True, input=(to_input + "\n" + "\n" * 15).encode("UTF-8"))
+        #value = str(result.stdout.decode("UTF-8"))[:-1]
     
 
     return value
@@ -193,7 +202,7 @@ def test_cases(args):
     was_compiled = language in ["cpp"]
 
     if language == "cpp":
-        res = subprocess.run(["g++", complete_path, "-o", file])
+        res = subprocess.run(["g++", complete_path, "-o", CURRENT_DIRECTORY + "/" + ".".join(file.split(".")[:-1])])
         
     print("{space}{white}[{green}+{white}] {grey}Compilation {green}successful{white}\n".format(space=SINGLE_SPACE, white=COLORS.WHITE, grey=COLORS.GREY, green=COLORS.OKGREEN))
     
