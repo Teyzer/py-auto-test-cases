@@ -18,18 +18,18 @@ CURVED_ARROW = "⤷"
 SINGLE_SPACE = "  "
 
 class COLORS:
-	HEADER = '\033[95m'
-	OKBLUE = '\033[94m'
-	OKCYAN = '\033[96m'
-	OKGREEN = '\033[92m'
-	WARNING = '\033[93m'
-	FAIL = '\033[91m'
-	ENDC = '\033[0m'
-	BOLD = '\033[1m'
-	UNDERLINE = '\033[4m'
-	WHITE = '\033[37m'
-	GREY = '\033[90m'
-	ORANGE = '\033[33m'
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+    WHITE = '\033[37m'
+    GREY = '\033[90m'
+    ORANGE = '\033[33m'
 
 """
 COMMAND UTILITIES
@@ -42,7 +42,7 @@ def directory():
 		return CURRENT_DIRECTORY
 
 def get_directory_elements():
-	
+
 	files_folders = os.listdir(CURRENT_DIRECTORY)
 
 	files = []
@@ -63,29 +63,29 @@ def get_folders():
 	return get_directory_elements()[1]
 
 def choose_test_file(filename):
-	
+
 	files = list(filter(lambda s: ".txt" in s, get_files()))
 	print("\n{space}{white}[-]{grey} Choose a test file among the ones here:".format(space=SINGLE_SPACE, white=COLORS.WHITE, grey=COLORS.GREY))
-	
+
 	for index, file in enumerate(files):
 		print("{space}{space}{white}{arrow} {0}{grey}: {1}".format(index + 1, file, space=SINGLE_SPACE, arrow=CURVED_ARROW, white=COLORS.WHITE, grey=COLORS.GREY))
-	
+
 	response = input("{space}{white}[-] {grey}Choice: {white}".format(space=SINGLE_SPACE, white=COLORS.WHITE, grey=COLORS.GREY))
 	print(end="\n")
-	
+
 	return files[int(response) - 1]
 
 def choose_random_generator():
 
 	files = list(filter(lambda s: (".py" in s) and ("gen" in s), get_files()))
 	print("\n{space}{white}[-]{grey} Choose a random test generator among the ones here:".format(space=SINGLE_SPACE, white=COLORS.WHITE, grey=COLORS.GREY))
-	
+
 	for index, file in enumerate(files):
 		print("{space}{space}{white}{arrow} {0}{grey}: {1}".format(index + 1, file, space=SINGLE_SPACE, arrow=CURVED_ARROW, white=COLORS.WHITE, grey=COLORS.GREY))
-	
+
 	response = input("{space}{white}[-] {grey}Choice: {white}".format(space=SINGLE_SPACE, white=COLORS.WHITE, grey=COLORS.GREY))
 	print(end="\n")
-	
+
 	return files[int(response) - 1]
 
 def ask_compare_inputs():
@@ -93,17 +93,17 @@ def ask_compare_inputs():
 	print("{space}{white}[-]{grey} Choose a number of test:".format(space=SINGLE_SPACE, white=COLORS.WHITE, grey=COLORS.GREY))
 	test_number = int(input("{space}{white}[-] {grey}Choice: {white}".format(space=SINGLE_SPACE, white=COLORS.WHITE, grey=COLORS.GREY)))
 	print(end="\n")
-	
+
 	return [test_number]
 
 def compile_file(file):
-	
+
 	#print(file)
-	
+
 	filename = file.split(".")[0]
 	language = file.split(".")[-1]
 	complete_path = CURRENT_DIRECTORY + "/" + file
-	
+
 	#print(filename, language)
 
 	if language == "py":
@@ -162,7 +162,7 @@ def run_file(file, language, to_input, timeout_time=10):
 				value = str(result.stdout.decode("UTF-8"))[:-1]
 			except subprocess.CalledProcessError:
 				value = str(result.stdout.decode("UTF-8"))[:-1] + '\n' + str(result.stderr.decode("UTF-8"))[:-1]
-				
+
 		except subprocess.TimeoutExpired:
 			value = "TIMEOUT"
 
@@ -187,10 +187,30 @@ def create_write_test_file():
 
 
 def write_test_in_file(filename, name, test, awaited="None"):
-	
+
 	with open(CURRENT_DIRECTORY + "/" + filename, "a") as f:
 		f.write("####\n{0}\n##\n{1}\n##\n{2}\n".format(name, test, awaited))
 
+
+
+def run_file(file, language, to_input):
+
+    if language == "cpp":
+        result = subprocess.run([CURRENT_DIRECTORY + "/" + ".".join(file.split(".")[:-1])], capture_output=True, input=(to_input + "\n").encode("UTF-8"))
+        value = str(result.stdout.decode("UTF-8"))[:-1]
+
+    #print(file)
+
+    if language == "py":
+        #print(to_input.encode())
+        p = subprocess.Popen(["python3", CURRENT_DIRECTORY + "/" + file], stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
+        value = "\n".join(p.communicate(input=(to_input[1:] + "\n").encode("UTF-8"))[0].decode("UTF-8").split("\n")[:-1])
+        #print(stdout_data)
+        #result = subprocess.run(["python3", CURRENT_DIRECTORY + "/" + file], capture_output=True, input=(to_input + "\n" + "\n" * 15).encode("UTF-8"))
+        #value = str(result.stdout.decode("UTF-8"))[:-1]
+
+
+    return value
 
 
 """
@@ -225,7 +245,7 @@ def process(req):
 		LAST_USED_COMMAND = command
 		LAST_USED_COMMAND_ARGS = args
 		COMMANDS[command](args)
-	
+
 	print("")
 
 
@@ -254,10 +274,10 @@ def cd(args):
 	if len(args) == 0:
 		print(CURRENT_DIRECTORY)
 		return
-	
+
 	folders = get_folders()
 	target_directory = args[0].replace("/", "")
-	
+
 	if target_directory in folders:
 		CURRENT_DIRECTORY += "/" + target_directory
 	elif target_directory == "..":
@@ -283,7 +303,7 @@ def compare_scripts(args):
 		filename = file.split(".")[0]
 		language = file.split(".")[1]
 		compile_file(file)
-	
+
 	random_generator = choose_random_generator()
 	a_random_test = lambda: run_file(random_generator, "py", "")
 
@@ -310,10 +330,10 @@ def compare_scripts(args):
 	for i in range(number_of_files):
 		print("-" * max_char_allowed_per_row + "+", end="")
 	print(end="\n")
-	
+
 	# Actual compute
 	for i in range(number_of_tests):
-		
+
 		times = []
 		results = []
 
@@ -324,7 +344,7 @@ def compare_scripts(args):
 
 			script_name = script.split(".")[0]
 			script_language = script.split(".")[1]
-			
+
 			start = time.time()
 
 			temp_result = run_file(script_name + "." + script_language, script_language, test_to_give, timeout_time=0.5)
@@ -371,7 +391,7 @@ def compare_scripts(args):
 			print(" {col}".format(col=display_color) + res + (" " * abs(max_char_allowed_per_row - res_len - 1)) + "{grey}|".format(grey=COLORS.GREY), end="")
 
 		print(end="\n")
-		
+
 		print("{space}{space}| Runtimes {0}|".format(" "*(len(str(number_of_tests)) + 1), space=SINGLE_SPACE), end="")
 		for j in range(len(files)):
 
@@ -445,7 +465,7 @@ def compare_scripts(args):
 
 		print(" {white}".format(white=COLORS.WHITE) + res + (" " * abs(max_char_allowed_per_row - res_len - 1)) + "{grey}|".format(grey=COLORS.GREY), end="")
 	print(end="\n")
-	
+
 	print("{space}{space}+-------------+".format(space=SINGLE_SPACE), end="")
 	for i in range(number_of_files):
 		print("-" * max_char_allowed_per_row + "+", end="")
@@ -459,7 +479,7 @@ def compare_scripts(args):
 
 	if resp.lower() != "y":
 		os.remove(CURRENT_DIRECTORY + "/" + writing_file)
-		
+
 	for fil in files:
 		uncompile_file(fil)
 
@@ -478,11 +498,11 @@ def test_cases(args):
 
 	# Reformat
 	if "." + language not in file:
-		file += "." + language 
+		file += "." + language
 
 	# For clarity
 	complete_path = CURRENT_DIRECTORY + "/" + file
-	
+
 	# Ask file, and get content
 	test_file = choose_test_file(file)
 
@@ -506,9 +526,9 @@ def test_cases(args):
 
 	# Precompile
 	compile_file(file)
-		
+
 	print("{space}{white}[{green}+{white}] {grey}Compilation {green}successful{white}\n".format(space=SINGLE_SPACE, white=COLORS.WHITE, grey=COLORS.GREY, green=COLORS.OKGREEN))
-	
+
 	print("{space}{white}[+]{grey}Running {green}{0} {grey}tests".format(len(name), space=SINGLE_SPACE, white=COLORS.WHITE, grey=COLORS.GREY, green=COLORS.OKGREEN))
 
 	# Additional variables
@@ -517,11 +537,11 @@ def test_cases(args):
 
 	# Running each test case
 	for i in range(len(name)):
-		
+
 		print("{space}{space}{grey}{arrow} {white}#{0}{grey}: Provided value for test '{grey}{1}{grey}', testing...".format(i + 1, name[i], space=SINGLE_SPACE, arrow=CURVED_ARROW, white=COLORS.WHITE, grey=COLORS.GREY))
 		starting_time = time.time()
 		value = run_file(file, language, to_give[i] )
-		
+
 		print("{space}{space}  ".format(space=SINGLE_SPACE), end="")
 
 		if value == expected[i]:
@@ -548,12 +568,12 @@ if __name__ == "__main__":
 		"dirhid": lambda args: dirhid(args),
 		"dirshow": lambda args: dirshow(args),
 		"dir": lambda args: dir(args),
-		"ls": lambda args: dir(args), 
+		"ls": lambda args: dir(args),
 		"cd": lambda args: cd(args),
 		"test": lambda args: test_cases(args),
 		"compare": lambda args: compare_scripts(args),
 	}
-	
+
 	console_start()
 
 	if "compare" in sys.argv:
