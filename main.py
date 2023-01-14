@@ -192,27 +192,6 @@ def write_test_in_file(filename, name, test, awaited="None"):
 		f.write("####\n{0}\n##\n{1}\n##\n{2}\n".format(name, test, awaited))
 
 
-
-def run_file(file, language, to_input):
-
-    if language == "cpp":
-        result = subprocess.run([CURRENT_DIRECTORY + "/" + ".".join(file.split(".")[:-1])], capture_output=True, input=(to_input + "\n").encode("UTF-8"))
-        value = str(result.stdout.decode("UTF-8"))[:-1]
-
-    #print(file)
-
-    if language == "py":
-        #print(to_input.encode())
-        p = subprocess.Popen(["python3", CURRENT_DIRECTORY + "/" + file], stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
-        value = "\n".join(p.communicate(input=(to_input[1:] + "\n").encode("UTF-8"))[0].decode("UTF-8").split("\n")[:-1])
-        #print(stdout_data)
-        #result = subprocess.run(["python3", CURRENT_DIRECTORY + "/" + file], capture_output=True, input=(to_input + "\n" + "\n" * 15).encode("UTF-8"))
-        #value = str(result.stdout.decode("UTF-8"))[:-1]
-
-
-    return value
-
-
 """
 CONSOLE HANDLING
 """
