@@ -3,6 +3,9 @@
 using namespace std;
 
 int main() {
-    cout << 2 << endl;
-    return 0; 
+    long long n;
+    cin >> n;
+    cout << n * n << endl;
+    return 0;
+
 }
